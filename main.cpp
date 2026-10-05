@@ -6,7 +6,6 @@
 #include <functional>
 #include <iostream>
 #include <optional>
-#include <random>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -15,14 +14,6 @@
 #include "config.h"
 #include "model.h"
 #include "tgaimage.h"
-
-constexpr TGAColor WHITE = {255, 255, 255, 255};  // attention, BGRA order
-constexpr TGAColor GREEN = {0, 255, 0, 255};
-constexpr TGAColor RED = {0, 0, 255, 255};
-constexpr TGAColor BLUE = {255, 128, 64, 255};
-constexpr TGAColor YELLOW = {0, 200, 255, 255};
-
-const std::vector<TGAColor> COLORS = {GREEN, BLUE, RED, YELLOW, WHITE};
 
 struct DeviceCoord {
     int x, y;
@@ -75,7 +66,7 @@ void line(TGAImage& fb, DeviceCoord a, DeviceCoord b, TGAColor color) {
 }
 
 // A kind of scanline rasterization algorithm. But scanning columns xD.
-void triangle(TGAImage& fb, DeviceCoord a, DeviceCoord b, DeviceCoord c, TGAColor color) {
+void triangle2(TGAImage& fb, DeviceCoord a, DeviceCoord b, DeviceCoord c, TGAColor color) {
     if (a.x > b.x) std::swap(a, b);
     if (a.x > c.x) std::swap(a, c);
     if (b.x > c.x) std::swap(b, c);
@@ -151,7 +142,7 @@ std::function<int(int y)> createXFromY(DeviceCoord a, DeviceCoord b) {
 }
 
 // Scanline algorithm.
-void triangle2(TGAImage& fb, DeviceCoord a, DeviceCoord b, DeviceCoord c, TGAColor color) {
+void triangle(TGAImage& fb, DeviceCoord a, DeviceCoord b, DeviceCoord c, TGAColor color) {
     // Sort coordinates by the y value.
     if (a.y > b.y) std::swap(a, b);
     if (a.y > c.y) std::swap(a, c);
@@ -193,10 +184,6 @@ DeviceCoord project(Vertex v, int width, int height) {
 }
 
 int main(const int argc, const char** argv) {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<std::size_t> dist(0, COLORS.size() - 1);
-
     Config config(argc, argv);
 
     constexpr int SIZE = 1024;
@@ -219,7 +206,7 @@ int main(const int argc, const char** argv) {
         auto dcb = project(vb, WIDTH, HEIGHT);
         auto dcc = project(vc, WIDTH, HEIGHT);
 
-        triangle2(framebuffer, dca, dcb, dcc, COLORS[dist(gen)]);
+        triangle(framebuffer, dca, dcb, dcc, TGAColor::random());
     }
 
     // auto p1 = DeviceCoord(7, 45);
@@ -232,9 +219,9 @@ int main(const int argc, const char** argv) {
     // auto p8 = DeviceCoord(80, 90);
     // auto p9 = DeviceCoord(85, 120);
 
-    // triangle2(framebuffer, p1, p2, p3, RED);
-    // triangle2(framebuffer, p4, p5, p6, WHITE);
-    // triangle2(framebuffer, p7, p8, p9, GREEN);
+    // triangle(framebuffer, p1, p2, p3, RED);
+    // triangle(framebuffer, p4, p5, p6, WHITE);
+    // triangle(framebuffer, p7, p8, p9, GREEN);
 
     framebuffer.write_tga_file("framebuffer.tga");
     return 0;

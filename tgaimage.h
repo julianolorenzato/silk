@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <fstream>
+#include <random>
 #include <vector>
 
 #pragma pack(push, 1)
@@ -24,7 +25,25 @@ struct TGAColor {
     std::uint8_t bgra[4] = {0, 0, 0, 0};
     std::uint8_t bytespp = 4;
     std::uint8_t &operator[](const int i) { return bgra[i]; }
+
+    static TGAColor random(bool randomAlpha = false) {
+        thread_local std::mt19937 gen{std::random_device{}()};
+        std::uniform_int_distribution<int> dist(0, 255);
+
+        TGAColor c;
+        c.bgra[0] = static_cast<std::uint8_t>(dist(gen));                      // B
+        c.bgra[1] = static_cast<std::uint8_t>(dist(gen));                      // G
+        c.bgra[2] = static_cast<std::uint8_t>(dist(gen));                      // R
+        c.bgra[3] = randomAlpha ? static_cast<std::uint8_t>(dist(gen)) : 255;  // A
+        return c;
+    }
 };
+
+constexpr TGAColor WHITE = {255, 255, 255, 255};  // attention, BGRA order
+constexpr TGAColor GREEN = {0, 255, 0, 255};
+constexpr TGAColor RED = {0, 0, 255, 255};
+constexpr TGAColor BLUE = {255, 128, 64, 255};
+constexpr TGAColor YELLOW = {0, 200, 255, 255};
 
 struct TGAImage {
     enum Format { GRAYSCALE = 1, RGB = 3, RGBA = 4 };
